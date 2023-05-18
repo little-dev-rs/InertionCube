@@ -2,8 +2,6 @@
 //  AppDelegate.swift
 //  InertionCube
 //
-//  Created by Svetlana Shardakova on 17.05.2023.
-//
 
 import UIKit
 
