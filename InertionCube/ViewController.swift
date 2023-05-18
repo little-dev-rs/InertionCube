@@ -6,41 +6,51 @@
 import UIKit
 
 class ViewController: UIViewController {
+    private lazy var cubeView: UIView = {
+        let view = UIView(frame: CGRect(origin: .init(x: view.center.x - 50, y: view.center.y - 50),
+                                        size: CGSize(width: 100, height: 100)))
+        view.backgroundColor = .blue
+        view.layer.cornerRadius = 10
+        return view
+    }()
 
-    @IBOutlet weak var cubeView: UIView!
-
-    private var secondAnimator: UIDynamicAnimator?
-    private var animator: UIViewPropertyAnimator?
-
+    private var animator: UIDynamicAnimator!
+    private var snapBehavior: UISnapBehavior!
+    private var rotationBehavior: UIDynamicItemBehavior!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setupCube()
+        view.addSubview(cubeView)
         configureGestures()
+    }
 
-    }
-    
-    func setupCube() {
-        cubeView.backgroundColor = .blue
-        cubeView.layer.cornerRadius = 10
-    }
-    
     func configureGestures() {
-        let panGesture = UITapGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-        view.addGestureRecognizer(panGesture)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        view.addGestureRecognizer(tapGesture)
     }
     
-    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+    @objc private func handlePan(_ gesture: UITapGestureRecognizer) {
         let touchPoint = gesture.location(in: view)
+        
+        animator = UIDynamicAnimator(referenceView: view)
+        snapBehavior = UISnapBehavior(item: cubeView, snapTo: touchPoint)
+        snapBehavior.damping = 0.8
 
-        let projection = UIViewPropertyAnimator(duration: 1, dampingRatio: 0.7 ) {
-            self.cubeView.transform = .identity
+        rotationBehavior = UIDynamicItemBehavior(items: [cubeView])
+        rotationBehavior.allowsRotation = true
+        rotationBehavior.angularResistance = 0.5
+        animator.addBehavior(rotationBehavior)
+    
+        switch gesture.state {
+        case .began:
+            animator.removeBehavior(snapBehavior)
+        case .changed:
+            cubeView.center = touchPoint
+        case .ended, .cancelled:
+            animator.addBehavior(snapBehavior)
+        default:
+            break
         }
-        projection.addAnimations {
-            self.cubeView.transform = CGAffineTransform(rotationAngle: 0.2)
-            self.cubeView.center = touchPoint
-        }
-        projection.startAnimation()
     }
 
 }
